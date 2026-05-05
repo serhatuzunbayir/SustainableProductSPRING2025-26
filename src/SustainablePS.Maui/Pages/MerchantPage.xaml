@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SustainablePS.Maui.Pages.MerchantPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Merchant Console">
+    <Grid RowDefinitions="Auto,*" RowSpacing="16">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+            <VerticalStackLayout Spacing="5">
+                <Label Text="SustainablePS Merchant" FontSize="28" FontAttributes="Bold" />
+                <Label x:Name="SubtitleLabel" Text="Manage products, stock, orders, and merchant notifications." TextColor="{StaticResource Muted}" />
+            </VerticalStackLayout>
+            <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                <Button
+                    x:Name="RefreshButton"
+                    Text="Refresh"
+                    Style="{StaticResource SecondaryButton}"
+                    Clicked="OnRefreshClicked"
+                    IsVisible="False" />
+                <Button
+                    x:Name="LogoutButton"
+                    Text="Logout"
+                    Style="{StaticResource SecondaryButton}"
+                    Clicked="OnLogoutClicked"
+                    IsVisible="False" />
+            </HorizontalStackLayout>
+        </Grid>
+
+        <Border x:Name="LoginPanel" Grid.Row="1" Style="{StaticResource CardFrame}" MaximumWidthRequest="520" HorizontalOptions="Center" VerticalOptions="Start">
+            <VerticalStackLayout Spacing="12">
+                <Label Text="Merchant Login" FontSize="22" FontAttributes="Bold" />
+                <Label Text="Use the demo merchant account or register a merchant in the web app first." TextColor="{StaticResource Muted}" />
+                <Entry x:Name="LoginEmailEntry" Placeholder="Email" Keyboard="Email" />
+                <Entry x:Name="LoginPasswordEntry" Placeholder="Password" IsPassword="True" />
+                <Button Text="Login" Clicked="OnLoginClicked" />
+                <Label Text="Demo: merchant@sustainable.test / demo123" TextColor="{StaticResource Muted}" FontSize="12" />
+            </VerticalStackLayout>
+        </Border>
+
+        <ScrollView x:Name="ConsolePanel" Grid.Row="1" IsVisible="False">
+            <Grid ColumnDefinitions="1.05*,1.25*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="16">
+                <Border Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <VerticalStackLayout Spacing="3">
+                                <Label x:Name="EditorTitleLabel" Text="Add Product" FontSize="20" FontAttributes="Bold" />
+                                <Label x:Name="EditorHintLabel" Text="Create a product with price, stock, and carbon data." TextColor="{StaticResource Muted}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="Clear" Style="{StaticResource SecondaryButton}" Clicked="OnClearProductFormClicked" />
+                        </Grid>
+
+                        <Entry x:Name="NameEntry" Placeholder="Product name" />
+                        <Entry x:Name="CategoryEntry" Placeholder="Category" />
+                        <Entry x:Name="DescriptionEntry" Placeholder="Description" />
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Entry x:Name="PriceEntry" Keyboard="Numeric" Placeholder="Price" />
+                            <Entry x:Name="StockEntry" Grid.Column="1" Keyboard="Numeric" Placeholder="Stock" />
+                            <Entry x:Name="CarbonEntry" Grid.Column="2" Keyboard="Numeric" Placeholder="kg CO2e" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Button x:Name="SaveProductButton" Text="Add Product" Clicked="OnSaveProductClicked" />
+                            <Button
+                                x:Name="DeleteSelectedProductButton"
+                                Grid.Column="1"
+                                Text="Delete"
+                                Style="{StaticResource DangerButton}"
+                                Clicked="OnDeleteSelectedProductClicked"
+                                IsVisible="False" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="Products and Stock" FontSize="20" FontAttributes="Bold" />
+                                <Label x:Name="ProductCountLabel" TextColor="{StaticResource Muted}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                        <CollectionView x:Name="MerchantProductsView" SelectionMode="None" HeightRequest="340">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CardFrame}" Margin="0,0,0,10" BackgroundColor="{StaticResource Surface}">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <VerticalStackLayout Spacing="5">
+                                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                                                <Label Text="{Binding Category}" TextColor="{StaticResource Muted}" />
+                                                <HorizontalStackLayout Spacing="12">
+                                                    <Label Text="{Binding Price, StringFormat='${0:F2}'}" />
+                                                    <Label Text="{Binding CarbonKgPerUnit, StringFormat='{0:F2} kg CO2e'}" />
+                                                    <Label Text="{Binding StockQuantity, StringFormat='Stock {0}'}" FontAttributes="Bold" />
+                                                </HorizontalStackLayout>
+                                            </VerticalStackLayout>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                                <HorizontalStackLayout Spacing="6">
+                                                    <Button Text="-" Style="{StaticResource SecondaryButton}" Clicked="OnDecreaseStockClicked" />
+                                                    <Button Text="+" Style="{StaticResource SecondaryButton}" Clicked="OnIncreaseStockClicked" />
+                                                </HorizontalStackLayout>
+                                                <Button Text="Edit" Style="{StaticResource SecondaryButton}" Clicked="OnEditProductClicked" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Row="1" Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="Orders" FontSize="20" FontAttributes="Bold" />
+                                <Label x:Name="OrderCountLabel" TextColor="{StaticResource Muted}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                        <CollectionView x:Name="MerchantOrdersView" SelectionMode="None" HeightRequest="340">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CardFrame}" Margin="0,0,0,10" BackgroundColor="{StaticResource Surface}">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <VerticalStackLayout Spacing="5">
+                                                <Label Text="{Binding CreatedAt, StringFormat='{0:MMM dd, yyyy}'}" FontAttributes="Bold" />
+                                                <Label Text="{Binding Status, StringFormat='Status: {0}'}" />
+                                                <HorizontalStackLayout Spacing="12">
+                                                    <Label Text="{Binding TotalPrice, StringFormat='${0:F2}'}" />
+                                                    <Label Text="{Binding TotalCarbonKg, StringFormat='{0:F2} kg CO2e'}" TextColor="{StaticResource Muted}" />
+                                                </HorizontalStackLayout>
+                                            </VerticalStackLayout>
+                                            <Button Grid.Column="1" Text="Next Status" Style="{StaticResource SecondaryButton}" Clicked="OnAdvanceOrderStatusClicked" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <VerticalStackLayout Spacing="3">
+                                <Label Text="Notifications" FontSize="20" FontAttributes="Bold" />
+                                <Label x:Name="NotificationCountLabel" TextColor="{StaticResource Muted}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="Mark Read" Style="{StaticResource SecondaryButton}" Clicked="OnMarkNotificationsReadClicked" />
+                        </Grid>
+                        <CollectionView x:Name="MerchantNotificationsView" SelectionMode="None" HeightRequest="340">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CardFrame}" Margin="0,0,0,10" BackgroundColor="{StaticResource Surface}">
+                                        <VerticalStackLayout Spacing="5">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <Label Text="{Binding Title}" FontAttributes="Bold" />
+                                                <Label Grid.Column="1" Text="{Binding IsRead, StringFormat='Read: {0}'}" TextColor="{StaticResource Muted}" />
+                                            </Grid>
+                                            <Label Text="{Binding Message}" TextColor="{StaticResource Muted}" />
+                                            <Label Text="{Binding CreatedAt, StringFormat='{0:MMM dd, HH:mm}'}" FontSize="12" TextColor="{StaticResource Muted}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </ScrollView>
+    </Grid>
+</ContentPage>

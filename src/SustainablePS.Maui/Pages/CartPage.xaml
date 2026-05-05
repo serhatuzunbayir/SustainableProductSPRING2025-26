@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SustainablePS.Maui.Pages.CartPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Cart">
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+        <VerticalStackLayout Spacing="4">
+            <Label Text="Checkout" FontSize="24" FontAttributes="Bold" />
+            <Label Text="Demo card 4242 4242 4242 4242 succeeds; cards ending 0000 fail." TextColor="{StaticResource Muted}" />
+        </VerticalStackLayout>
+
+        <CollectionView x:Name="CartView" Grid.Row="1" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource CardFrame}" Margin="0,0,0,10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{Binding Product.Name}" FontAttributes="Bold" FontSize="17" />
+                                <Label Text="{Binding Quantity, StringFormat='Quantity {0}'}" />
+                                <Label Text="{Binding LineCarbonKg, StringFormat='{0:F2} kg CO2e'}" TextColor="{StaticResource Muted}" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="1" Text="{Binding LineTotal, StringFormat='${0:F2}'}" FontAttributes="Bold" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border Grid.Row="2" Style="{StaticResource CardFrame}">
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="Total" FontAttributes="Bold" />
+                    <Label x:Name="TotalLabel" Grid.Column="1" FontAttributes="Bold" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Text="Carbon footprint" />
+                    <Label x:Name="CarbonLabel" Grid.Column="1" />
+                </Grid>
+                <Button Text="Pay and Place Order" Clicked="OnCheckoutClicked" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

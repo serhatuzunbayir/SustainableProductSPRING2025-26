@@ -1,0 +1,374 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject MarketplaceService Marketplace
+@using System.Globalization
+
+<PageTitle>SustainablePS Customer</PageTitle>
+
+<div class="screen-header">
+    <div>
+        <span class="eyebrow">Customer Web</span>
+        <h1>Eco Product Catalog</h1>
+        <p>Browse products, compare carbon impact, and complete a checkout with purchase history.</p>
+    </div>
+    <div class="header-actions">
+        <button class="secondary-button compact-button" @onclick="RefreshView">Refresh</button>
+        <div class="account-pill">
+            @(_currentUser is null ? "Not signed in" : $"{_currentUser.Email} - {_currentUser.Role}")
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(_message))
+{
+    <div class="notice">@_message</div>
+}
+
+<section class="account-strip">
+    <div>
+        <h2>Account</h2>
+        <p>@(_currentUser is null ? "Log in or register to shop." : $"Signed in as {_currentUser.FullName}.")</p>
+    </div>
+    <div class="auth-form">
+        @if (_isRegistering)
+        {
+            <input placeholder="Full name" @bind="_fullName" />
+        }
+        <input placeholder="Email" @bind="_email" />
+        <input placeholder="Password" type="password" @bind="_password" />
+        @if (_isRegistering)
+        {
+            <select @bind="_role">
+                <option value="@UserRole.Customer">Customer</option>
+                <option value="@UserRole.Merchant">Merchant</option>
+            </select>
+        }
+        <button class="primary-button" @onclick="SubmitAccount">@(_isRegistering ? "Register" : "Login")</button>
+        <button class="secondary-button" @onclick="ToggleRegister">@(_isRegistering ? "Use Login" : "Create Account")</button>
+        @if (_currentUser is not null)
+        {
+            <button class="ghost-button" @onclick="Logout">Logout</button>
+        }
+    </div>
+</section>
+
+<section class="metric-grid">
+    <div class="metric-card">
+        <span>Total cart</span>
+        <strong>@FormatMoney(Cart.Sum(line => line.LineTotal))</strong>
+    </div>
+    <div class="metric-card">
+        <span>Cart carbon</span>
+        <strong>@FormatKg(Cart.Sum(line => line.LineCarbonKg)) kg</strong>
+    </div>
+    <div class="metric-card">
+        <span>Lifetime carbon</span>
+        <strong>@FormatKg(Summary.TotalCarbonKg) kg</strong>
+    </div>
+    <div class="metric-card">
+        <span>Unread notifications</span>
+        <strong>@Notifications.Count(notification => !notification.IsRead)</strong>
+    </div>
+</section>
+
+<section class="catalog-toolbar">
+    <input placeholder="Search products" @bind="_searchText" @bind:event="oninput" />
+    <select @bind="_selectedCategory">
+        <option value="All">All categories</option>
+        @foreach (var category in Categories)
+        {
+            <option value="@category">@category</option>
+        }
+    </select>
+</section>
+
+<div class="commerce-grid">
+    <section class="surface-panel">
+        <div class="panel-heading">
+            <h2>Catalog</h2>
+            <span>@FilteredProducts.Count product(s)</span>
+        </div>
+
+        <div class="product-list">
+            @foreach (var product in FilteredProducts)
+            {
+                <article class="product-row">
+                    <div>
+                        <div class="product-title-row">
+                            <h3>@product.Name</h3>
+                            <span>@product.Category</span>
+                        </div>
+                        <p>@product.Description</p>
+                        <div class="product-meta">
+                            <strong>@FormatMoney(product.Price)</strong>
+                            <span>@FormatKg(product.CarbonKgPerUnit) kg CO2e/unit</span>
+                            <span>@product.StockQuantity in stock</span>
+                        </div>
+                    </div>
+                    <button class="primary-button compact-button" disabled="@(!CanShop || product.StockQuantity == 0)" @onclick="() => AddToCart(product.Id)">
+                        Add
+                    </button>
+                </article>
+            }
+        </div>
+    </section>
+
+    <aside class="side-stack">
+        <section class="surface-panel">
+            <div class="panel-heading">
+                <h2>Cart</h2>
+                <span>@Cart.Sum(line => line.Quantity) item(s)</span>
+            </div>
+
+            @if (!CanShop)
+            {
+                <p class="empty-state">Sign in as a customer to use the cart.</p>
+            }
+            else if (Cart.Count == 0)
+            {
+                <p class="empty-state">Your cart is empty.</p>
+            }
+            else
+            {
+                <div class="cart-list">
+                    @foreach (var line in Cart)
+                    {
+                        <div class="cart-line">
+                            <div>
+                                <strong>@line.Product.Name</strong>
+                                <span>@FormatMoney(line.LineTotal) · @FormatKg(line.LineCarbonKg) kg CO2e</span>
+                            </div>
+                            <div class="quantity-control">
+                                <button @onclick="() => SetCartQuantity(line.Product.Id, line.Quantity - 1)">-</button>
+                                <span>@line.Quantity</span>
+                                <button @onclick="() => SetCartQuantity(line.Product.Id, line.Quantity + 1)">+</button>
+                                <button class="remove-button" @onclick="() => SetCartQuantity(line.Product.Id, 0)">Remove</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="cart-total">
+                <span>Total</span>
+                <strong>@FormatMoney(Cart.Sum(line => line.LineTotal))</strong>
+            </div>
+            <button class="primary-button full-width" disabled="@(!CanShop || !Cart.Any())" @onclick="Checkout">
+                Pay and Place Order
+            </button>
+        </section>
+
+        <section class="surface-panel">
+            <div class="panel-heading">
+                <h2>Notifications</h2>
+                <button class="secondary-button compact-button" disabled="@(!Notifications.Any())" @onclick="MarkNotificationsRead">Mark Read</button>
+            </div>
+
+            @if (Notifications.Count == 0)
+            {
+                <p class="empty-state">No notifications yet.</p>
+            }
+            else
+            {
+                <div class="notification-list">
+                    @foreach (var notification in Notifications.Take(5))
+                    {
+                        <article class="notification-row @(notification.IsRead ? "is-read" : "is-unread")">
+                            <strong>@notification.Title</strong>
+                            <span>@notification.Message</span>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </aside>
+</div>
+
+<section class="history-grid">
+    <div class="surface-panel">
+        <div class="panel-heading">
+            <h2>Carbon Dashboard</h2>
+            <span>@Summary.OrderCount order(s)</span>
+        </div>
+        <div class="dashboard-row">
+            <span>Average per order</span>
+            <strong>@FormatKg(Summary.AverageCarbonKgPerOrder) kg CO2e</strong>
+        </div>
+        @foreach (var point in Summary.MonthlyTotals)
+        {
+            <div class="dashboard-row">
+                <span>@point.Label</span>
+                <strong>@FormatKg(point.CarbonKg) kg</strong>
+            </div>
+        }
+    </div>
+
+    <div class="surface-panel">
+        <div class="panel-heading">
+            <h2>Purchase History</h2>
+            <span>@Orders.Count order(s)</span>
+        </div>
+        @if (Orders.Count == 0)
+        {
+            <p class="empty-state">No purchases yet.</p>
+        }
+        else
+        {
+            @foreach (var order in Orders)
+            {
+                <div class="order-row">
+                    <div>
+                        <strong>@order.CreatedAt.ToString("MMM dd, yyyy")</strong>
+                        <span>@order.Status · @order.Items.Count item type(s)</span>
+                    </div>
+                    <div>
+                        <strong>@FormatMoney(order.TotalPrice)</strong>
+                        <span>@FormatKg(order.TotalCarbonKg) kg CO2e</span>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    private UserAccount? _currentUser;
+    private string _email = MarketplaceService.DemoCustomerEmail;
+    private string _password = MarketplaceService.DemoPassword;
+    private string _fullName = string.Empty;
+    private string _searchText = string.Empty;
+    private string _selectedCategory = "All";
+    private UserRole _role = UserRole.Customer;
+    private bool _isRegistering;
+    private string? _message;
+
+    private bool CanShop => _currentUser?.Role == UserRole.Customer;
+    private IReadOnlyList<Product> Products => Marketplace.Products;
+    private IReadOnlyList<CartLine> Cart => CanShop ? Marketplace.GetCart(_currentUser!.Id) : [];
+    private IReadOnlyList<Order> Orders => CanShop ? Marketplace.GetCustomerOrders(_currentUser!.Id) : [];
+    private IReadOnlyList<Notification> Notifications => _currentUser is null ? [] : Marketplace.GetNotifications(_currentUser.Id);
+    private IReadOnlyList<string> Categories => Products.Select(product => product.Category).Distinct().OrderBy(category => category).ToList();
+
+    private IReadOnlyList<Product> FilteredProducts => Products
+        .Where(product => _selectedCategory == "All" || product.Category == _selectedCategory)
+        .Where(product => string.IsNullOrWhiteSpace(_searchText) ||
+            product.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            product.Description.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            product.Category.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    private CarbonSummary Summary => !CanShop
+        ? new CarbonSummary(0, 0, 0, [])
+        : Marketplace.GetCustomerCarbonSummary(_currentUser!.Id);
+
+    protected override void OnInitialized()
+    {
+        _currentUser = Marketplace.Login(MarketplaceService.DemoCustomerEmail, MarketplaceService.DemoPassword);
+    }
+
+    private void AddToCart(Guid productId)
+    {
+        if (!CanShop)
+        {
+            _message = "Customer access is required to add products to the cart.";
+            return;
+        }
+
+        try
+        {
+            Marketplace.AddToCart(_currentUser!.Id, productId, 1);
+            _message = "Product added to cart.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private void SetCartQuantity(Guid productId, int quantity)
+    {
+        if (!CanShop)
+        {
+            return;
+        }
+
+        try
+        {
+            Marketplace.SetCartQuantity(_currentUser!.Id, productId, quantity);
+            _message = quantity <= 0 ? "Product removed from cart." : "Cart updated.";
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private void Checkout()
+    {
+        if (!CanShop)
+        {
+            _message = "Customer access is required to place an order.";
+            return;
+        }
+
+        var result = Marketplace.Checkout(
+            _currentUser!.Id,
+            new PaymentDetails("4242424242424242", "Demo Customer", "12", "30", "123"));
+
+        _message = result.Message;
+    }
+
+    private void MarkNotificationsRead()
+    {
+        if (_currentUser is null)
+        {
+            return;
+        }
+
+        Marketplace.MarkAllNotificationsRead(_currentUser.Id);
+        _message = "Notifications marked as read.";
+    }
+
+    private void SubmitAccount()
+    {
+        try
+        {
+            _currentUser = _isRegistering
+                ? Marketplace.Register(_fullName, _email, _password, _role)
+                : Marketplace.Login(_email, _password);
+            _message = _isRegistering ? "Account created." : "Logged in.";
+            _isRegistering = false;
+        }
+        catch (Exception ex)
+        {
+            _message = ex.Message;
+        }
+    }
+
+    private void ToggleRegister()
+    {
+        _isRegistering = !_isRegistering;
+        _message = null;
+    }
+
+    private void Logout()
+    {
+        _currentUser = null;
+        _message = "Logged out.";
+    }
+
+    private void RefreshView()
+    {
+        _message = "View refreshed.";
+    }
+
+    private static string FormatMoney(decimal value)
+    {
+        return $"${value.ToString("0.00", CultureInfo.InvariantCulture)}";
+    }
+
+    private static string FormatKg(double value)
+    {
+        return value.ToString("0.00", CultureInfo.InvariantCulture);
+    }
+}

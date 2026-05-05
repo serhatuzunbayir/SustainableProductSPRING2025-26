@@ -1,0 +1,65 @@
+.app-frame {
+    min-height: 100vh;
+}
+
+.app-header {
+    align-items: center;
+    background: #fff;
+    border-bottom: 1px solid #d8e3de;
+    display: flex;
+    gap: 1.25rem;
+    height: 64px;
+    justify-content: space-between;
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    color: #143d32;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-decoration: none;
+}
+
+.content {
+    margin: 0 auto;
+    max-width: 1360px;
+    padding: 2rem;
+}
+
+#blazor-error-ui {
+    background: #fff2d2;
+    border-top: 1px solid #ddb766;
+    bottom: 0;
+    box-sizing: border-box;
+    color: #3b2b08;
+    display: none;
+    left: 0;
+    padding: 0.75rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+@media (max-width: 720px) {
+    .app-header {
+        align-items: flex-start;
+        flex-direction: column;
+        height: auto;
+        padding: 1rem;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+}

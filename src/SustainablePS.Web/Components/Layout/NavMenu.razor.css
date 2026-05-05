@@ -1,0 +1,18 @@
+.nav-menu {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    border-radius: 8px;
+    color: #65736e;
+    font-weight: 650;
+    padding: 0.5rem 0.75rem;
+    text-decoration: none;
+}
+
+.nav-link.active {
+    background: #e8f0ec;
+    color: #143d32;
+}

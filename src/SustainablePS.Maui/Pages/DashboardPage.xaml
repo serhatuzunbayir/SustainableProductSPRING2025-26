@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SustainablePS.Maui.Pages.DashboardPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Dashboard">
+    <ScrollView>
+        <VerticalStackLayout Spacing="14">
+            <VerticalStackLayout Spacing="4">
+                <Label Text="Carbon Dashboard" FontSize="24" FontAttributes="Bold" />
+                <Label Text="Customer purchase history and carbon totals" TextColor="{StaticResource Muted}" />
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Border Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout>
+                        <Label Text="Total CO2e" TextColor="{StaticResource Muted}" />
+                        <Label x:Name="TotalCarbonLabel" FontSize="24" FontAttributes="Bold" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout>
+                        <Label Text="Orders" TextColor="{StaticResource Muted}" />
+                        <Label x:Name="OrderCountLabel" FontSize="24" FontAttributes="Bold" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Label Text="Monthly Carbon" FontSize="18" FontAttributes="Bold" />
+            <CollectionView x:Name="MonthlyView" SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="*,Auto" Padding="0,6">
+                            <Label Text="{Binding Label}" />
+                            <Label Grid.Column="1" Text="{Binding CarbonKg, StringFormat='{0:F2} kg CO2e'}" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="Purchase History" FontSize="18" FontAttributes="Bold" />
+            <CollectionView x:Name="HistoryView" SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardFrame}" Margin="0,0,0,10">
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{Binding CreatedAt, StringFormat='{0:MMM dd, yyyy}'}" FontAttributes="Bold" />
+                                <Label Text="{Binding TotalPrice, StringFormat='${0:F2}'}" />
+                                <Label Text="{Binding TotalCarbonKg, StringFormat='{0:F2} kg CO2e'}" TextColor="{StaticResource Muted}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

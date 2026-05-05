@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SustainablePS.Core/SustainablePS.Core.csproj" />
+    <Project Path="src/SustainablePS.Maui/SustainablePS.Maui.csproj" />
+    <Project Path="src/SustainablePS.Web/SustainablePS.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SustainablePS.Core.Tests/SustainablePS.Core.Tests.csproj" />
+  </Folder>
+</Solution>

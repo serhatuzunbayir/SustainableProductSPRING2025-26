@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SustainablePS.Maui.Pages.CatalogPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Catalog">
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+        <VerticalStackLayout Spacing="4">
+            <Label Text="Eco Product Catalog" FontSize="24" FontAttributes="Bold" />
+            <Label Text="Signed in as customer@sustainable.test" TextColor="{StaticResource Muted}" />
+        </VerticalStackLayout>
+
+        <CollectionView x:Name="ProductsView" Grid.Row="1" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource CardFrame}" Margin="0,0,0,10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="17" />
+                                <Label Text="{Binding Description}" TextColor="{StaticResource Muted}" />
+                                <HorizontalStackLayout Spacing="12">
+                                    <Label Text="{Binding Price, StringFormat='${0:F2}'}" FontAttributes="Bold" />
+                                    <Label Text="{Binding CarbonKgPerUnit, StringFormat='{0:F2} kg CO2e/unit'}" />
+                                    <Label Text="{Binding StockQuantity, StringFormat='Stock {0}'}" TextColor="{StaticResource Muted}" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="Add" Clicked="OnAddToCartClicked" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border Grid.Row="2" Style="{StaticResource CardFrame}">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <VerticalStackLayout Spacing="3">
+                    <Label x:Name="CartCountLabel" FontAttributes="Bold" />
+                    <Label x:Name="CartCarbonLabel" TextColor="{StaticResource Muted}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="View Cart" Clicked="OnViewCartClicked" />
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>
