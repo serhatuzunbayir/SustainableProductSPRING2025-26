@@ -1,6 +1,6 @@
 ﻿@page "/"
 @rendermode InteractiveServer
-@inject MarketplaceService Marketplace
+@inject DatabaseMarketplaceService Marketplace
 @using System.Globalization
 
 <PageTitle>SustainablePS Customer</PageTitle>
@@ -243,7 +243,7 @@
     private string? _message;
 
     private bool CanShop => _currentUser?.Role == UserRole.Customer;
-    private IReadOnlyList<Product> Products => Marketplace.Products;
+    private IReadOnlyList<Product> Products => Marketplace.GetProducts();
     private IReadOnlyList<CartLine> Cart => CanShop ? Marketplace.GetCart(_currentUser!.Id) : [];
     private IReadOnlyList<Order> Orders => CanShop ? Marketplace.GetCustomerOrders(_currentUser!.Id) : [];
     private IReadOnlyList<Notification> Notifications => _currentUser is null ? [] : Marketplace.GetNotifications(_currentUser.Id);

@@ -10,6 +10,24 @@ public sealed class MarketplaceService
     public const string DemoCustomerEmail = "customer@sustainable.test";
     public const string DemoMerchantEmail = "merchant@sustainable.test";
 
+    // ──────────────────────────────────────────────────────────────────────
+    // Events — subscribers attach handlers using delegate types defined in
+    // MarketplaceEvents.cs. The marketplace raises these at key lifecycle
+    // points so UI layers and logging components can react without coupling.
+    // ──────────────────────────────────────────────────────────────────────
+
+    /// <summary>Raised after a customer's checkout succeeds and an order is created.</summary>
+    public event OrderConfirmedHandler? OrderConfirmed;
+
+    /// <summary>Raised whenever a product's stock quantity changes.</summary>
+    public event StockChangedHandler? StockChanged;
+
+    /// <summary>Raised when a merchant advances the status of an order.</summary>
+    public event OrderStatusChangedHandler? OrderStatusChanged;
+
+    /// <summary>Raised when a merchant adds a new product to the catalog.</summary>
+    public event ProductAddedHandler? ProductAdded;
+
     private readonly object _gate = new();
     private readonly CarbonCalculator _carbonCalculator = new();
     private readonly MockPaymentProcessor _paymentProcessor = new();
@@ -141,6 +159,10 @@ public sealed class MarketplaceService
 
             _products.Add(product);
             SaveState();
+
+            // Raise event outside the lock to avoid deadlock if handlers re-enter.
+            ProductAdded?.Invoke(merchantId, product.Name, product.CarbonKgPerUnit);
+
             return product;
         }
     }
@@ -179,6 +201,9 @@ public sealed class MarketplaceService
             var product = FindMerchantProduct(merchantId, productId);
             product.StockQuantity = stockQuantity;
             SaveState();
+
+            // Notify subscribers that a stock level has changed.
+            StockChanged?.Invoke(product.Id, product.Name, product.StockQuantity);
         }
     }
 
@@ -327,6 +352,9 @@ public sealed class MarketplaceService
                 AddOrderNotifications(order);
                 SaveState();
 
+                // Raise event so UI layers and analytics can react to the new order.
+                OrderConfirmed?.Invoke(customerId, order.Id, order.TotalCarbonKg);
+
                 return new CheckoutResult(true, "Order confirmed.", order, payment.TransactionId);
             }
             catch
@@ -399,12 +427,67 @@ public sealed class MarketplaceService
                 Message = $"Your order {order.Id.ToString()[..8]} is now {status}."
             });
             SaveState();
+
+            // Raise event so UI layers can refresh without polling.
+            OrderStatusChanged?.Invoke(order.Id, status.ToString());
         }
     }
 
     public CarbonSummary GetCustomerCarbonSummary(Guid customerId)
     {
         return _carbonCalculator.BuildCustomerSummary(GetCustomerOrders(customerId));
+    }
+
+    /// <summary>
+    /// Returns a LINQ-based analytics snapshot of the catalog and purchase history.
+    /// Demonstrates method-syntax LINQ: grouping, projection, filtering, ordering,
+    /// aggregation (Sum, Average, Count), and anonymous types.
+    /// </summary>
+    public CatalogAnalytics GetCatalogAnalytics()
+    {
+        lock (_gate)
+        {
+            LoadFromDiskIfChanged();
+
+            // ── Category breakdown: group active products and compute per-category stats ──
+            var categoryStats = _products
+                .Where(p => p.IsActive)
+                .GroupBy(p => p.Category)
+                .Select(g => new CategoryStat(
+                    Category: g.Key,
+                    ProductCount: g.Count(),
+                    AverageCarbonKgPerUnit: Math.Round(g.Average(p => p.CarbonKgPerUnit), 2),
+                    TotalStock: g.Sum(p => p.StockQuantity)))
+                .OrderBy(s => s.Category)
+                .ToList();
+
+            // ── Revenue per merchant: join orders → items → merchant, sum line totals ──
+            var revenueByMerchant = _orders
+                .Where(o => o.PaymentStatus == PaymentStatus.Paid)
+                .SelectMany(o => o.Items)
+                .GroupBy(item => item.MerchantId)
+                .Select(g => new MerchantRevenueStat(
+                    MerchantId: g.Key,
+                    MerchantName: _users
+                        .Where(u => u.Id == g.Key)
+                        .Select(u => u.FullName)
+                        .FirstOrDefault() ?? "Unknown",
+                    TotalRevenue: g.Sum(item => item.LineTotal),
+                    TotalCarbonKg: Math.Round(g.Sum(item => item.LineCarbonKg), 2),
+                    ItemsSold: g.Sum(item => item.Quantity)))
+                .OrderByDescending(s => s.TotalRevenue)
+                .ToList();
+
+            // ── Low-stock alert: active products with stock below threshold ──
+            const int LowStockThreshold = 5;
+            var lowStock = _products
+                .Where(p => p.IsActive && p.StockQuantity <= LowStockThreshold)
+                .OrderBy(p => p.StockQuantity)
+                .Select(p => new LowStockAlert(p.Id, p.Name, p.StockQuantity))
+                .ToList();
+
+            return new CatalogAnalytics(categoryStats, revenueByMerchant, lowStock);
+        }
     }
 
     public ImpactReport BuildImpactReport()
