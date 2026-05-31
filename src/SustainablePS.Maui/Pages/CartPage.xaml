@@ -3,41 +3,114 @@
     x:Class="SustainablePS.Maui.Pages.CartPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Cart">
-    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
-        <VerticalStackLayout Spacing="4">
-            <Label Text="Checkout" FontSize="24" FontAttributes="Bold" />
-            <Label Text="Demo card 4242 4242 4242 4242 succeeds; cards ending 0000 fail." TextColor="{StaticResource Muted}" />
+    Title="Cart"
+    BackgroundColor="#F7F8FA">
+
+    <Grid
+        RowDefinitions="Auto,*,Auto"
+        RowSpacing="14"
+        Padding="20,16">
+
+        <VerticalStackLayout Spacing="6">
+            <Label
+                Text="Checkout"
+                FontSize="26"
+                FontAttributes="Bold" />
+
+            <Label
+                Text="Demo card 4242 4242 4242 4242 succeeds; cards ending 0000 fail."
+                FontSize="13"
+                TextColor="{StaticResource Muted}"
+                LineBreakMode="WordWrap" />
         </VerticalStackLayout>
 
-        <CollectionView x:Name="CartView" Grid.Row="1" SelectionMode="None">
+        <CollectionView
+            x:Name="CartView"
+            Grid.Row="1"
+            SelectionMode="None"
+            Margin="0,4,0,0">
+
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Style="{StaticResource CardFrame}" Margin="0,0,0,10">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <VerticalStackLayout Spacing="5">
-                                <Label Text="{Binding Product.Name}" FontAttributes="Bold" FontSize="17" />
-                                <Label Text="{Binding Quantity, StringFormat='Quantity {0}'}" />
-                                <Label Text="{Binding LineCarbonKg, StringFormat='{0:F2} kg CO2e'}" TextColor="{StaticResource Muted}" />
+                    <Border
+                        Style="{StaticResource CardFrame}"
+                        Margin="0,0,0,10"
+                        Padding="14"
+                        BackgroundColor="White">
+
+                        <Grid
+                            ColumnDefinitions="*,Auto"
+                            ColumnSpacing="12"
+                            VerticalOptions="Center">
+
+                            <VerticalStackLayout Spacing="6">
+                                <Label
+                                    Text="{Binding Product.Name}"
+                                    FontAttributes="Bold"
+                                    FontSize="17"
+                                    LineBreakMode="TailTruncation" />
+
+                                <Label
+                                    Text="{Binding Quantity, StringFormat='Quantity {0}'}"
+                                    FontSize="14" />
+
+                                <Label
+                                    Text="{Binding LineCarbonKg, StringFormat='{0:F2} kg CO2e'}"
+                                    FontSize="13"
+                                    TextColor="{StaticResource Muted}" />
                             </VerticalStackLayout>
-                            <Label Grid.Column="1" Text="{Binding LineTotal, StringFormat='${0:F2}'}" FontAttributes="Bold" />
+
+                            <Label
+                                Grid.Column="1"
+                                Text="{Binding LineTotal, StringFormat='${0:F2}'}"
+                                FontAttributes="Bold"
+                                FontSize="16"
+                                VerticalOptions="Center" />
                         </Grid>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <Border Grid.Row="2" Style="{StaticResource CardFrame}">
-            <VerticalStackLayout Spacing="10">
+        <Border
+            Grid.Row="2"
+            Style="{StaticResource CardFrame}"
+            Padding="16"
+            BackgroundColor="White">
+
+            <VerticalStackLayout Spacing="12">
                 <Grid ColumnDefinitions="*,Auto">
-                    <Label Text="Total" FontAttributes="Bold" />
-                    <Label x:Name="TotalLabel" Grid.Column="1" FontAttributes="Bold" />
+                    <Label
+                        Text="Total"
+                        FontAttributes="Bold"
+                        FontSize="16" />
+
+                    <Label
+                        x:Name="TotalLabel"
+                        Grid.Column="1"
+                        FontAttributes="Bold"
+                        FontSize="16" />
                 </Grid>
+
                 <Grid ColumnDefinitions="*,Auto">
-                    <Label Text="Carbon footprint" />
-                    <Label x:Name="CarbonLabel" Grid.Column="1" />
+                    <Label
+                        Text="Carbon footprint"
+                        FontSize="14"
+                        TextColor="{StaticResource Muted}" />
+
+                    <Label
+                        x:Name="CarbonLabel"
+                        Grid.Column="1"
+                        FontSize="14"
+                        TextColor="{StaticResource Muted}" />
                 </Grid>
-                <Button Text="Pay and Place Order" Clicked="OnCheckoutClicked" />
+
+                <Button
+                    Text="Pay and Place Order"
+                    Clicked="OnCheckoutClicked"
+                    HeightRequest="48"
+                    CornerRadius="12"
+                    Margin="0,6,0,0" />
             </VerticalStackLayout>
         </Border>
     </Grid>
