@@ -56,7 +56,7 @@ if (app.Environment.IsDevelopment())
 
 // ── Authentication ─────────────────────────────────────────────────────────
 
-/// <summary>POST /api/auth/login — authenticates a user and returns the account details.</summary>
+// POST /api/auth/login — authenticates a user and returns the account details
 app.MapPost("/api/auth/login", (LoginRequest req, DatabaseMarketplaceService svc) =>
 {
     try
@@ -70,7 +70,7 @@ app.MapPost("/api/auth/login", (LoginRequest req, DatabaseMarketplaceService svc
     }
 }).WithName("Login").WithSummary("Authenticate a user by email and password");
 
-/// <summary>POST /api/auth/register — creates a new user account.</summary>
+// POST /api/auth/register — creates a new user account
 app.MapPost("/api/auth/register", (RegisterRequest req, DatabaseMarketplaceService svc) =>
 {
     try
@@ -86,12 +86,12 @@ app.MapPost("/api/auth/register", (RegisterRequest req, DatabaseMarketplaceServi
 
 // ── Products ───────────────────────────────────────────────────────────────
 
-/// <summary>GET /api/products — returns all active products ordered by name.</summary>
+// GET /api/products — returns all active products ordered by name
 app.MapGet("/api/products", (DatabaseMarketplaceService svc) =>
     Results.Ok(svc.GetProducts()))
     .WithName("GetProducts").WithSummary("List all active products");
 
-/// <summary>POST /api/products — merchant adds a new product.</summary>
+// POST /api/products — merchant adds a new product
 app.MapPost("/api/products", (AddProductRequest req, DatabaseMarketplaceService svc) =>
 {
     try
@@ -106,7 +106,7 @@ app.MapPost("/api/products", (AddProductRequest req, DatabaseMarketplaceService 
     }
 }).WithName("AddProduct").WithSummary("Add a new product to the catalog");
 
-/// <summary>PUT /api/products/{id} — merchant updates an existing product.</summary>
+// PUT /api/products/{id} — merchant updates an existing product
 app.MapPut("/api/products/{id:guid}", (Guid id, UpdateProductRequest req, DatabaseMarketplaceService svc) =>
 {
     try
@@ -121,7 +121,7 @@ app.MapPut("/api/products/{id:guid}", (Guid id, UpdateProductRequest req, Databa
     }
 }).WithName("UpdateProduct").WithSummary("Update an existing product");
 
-/// <summary>PATCH /api/products/{id}/stock — merchant updates stock quantity.</summary>
+// PATCH /api/products/{id}/stock — merchant updates stock quantity
 app.MapPatch("/api/products/{id:guid}/stock", (Guid id, UpdateStockRequest req, DatabaseMarketplaceService svc) =>
 {
     try
@@ -135,7 +135,7 @@ app.MapPatch("/api/products/{id:guid}/stock", (Guid id, UpdateStockRequest req, 
     }
 }).WithName("UpdateStock").WithSummary("Update product stock quantity");
 
-/// <summary>DELETE /api/products/{id} — merchant soft-deletes a product.</summary>
+// DELETE /api/products/{id} — merchant soft-deletes a product
 app.MapDelete("/api/products/{id:guid}", (Guid id, Guid merchantId, DatabaseMarketplaceService svc) =>
 {
     try
@@ -151,7 +151,7 @@ app.MapDelete("/api/products/{id:guid}", (Guid id, Guid merchantId, DatabaseMark
 
 // ── Cart ───────────────────────────────────────────────────────────────────
 
-/// <summary>GET /api/cart/{customerId} — returns the customer's current cart.</summary>
+// GET /api/cart/{customerId} — returns the customer's current cart
 app.MapGet("/api/cart/{customerId:guid}", (Guid customerId, DatabaseMarketplaceService svc) =>
 {
     try
@@ -164,7 +164,7 @@ app.MapGet("/api/cart/{customerId:guid}", (Guid customerId, DatabaseMarketplaceS
     }
 }).WithName("GetCart").WithSummary("Get cart contents for a customer");
 
-/// <summary>POST /api/cart/add — adds a product to the customer's cart.</summary>
+// POST /api/cart/add — adds a product to the customer's cart
 app.MapPost("/api/cart/add", (CartActionRequest req, DatabaseMarketplaceService svc) =>
 {
     try
@@ -178,7 +178,7 @@ app.MapPost("/api/cart/add", (CartActionRequest req, DatabaseMarketplaceService 
     }
 }).WithName("AddToCart").WithSummary("Add a product to the cart");
 
-/// <summary>POST /api/cart/checkout — processes payment and creates an order.</summary>
+// POST /api/cart/checkout — processes payment and creates an order
 app.MapPost("/api/cart/checkout", (CheckoutRequest req, DatabaseMarketplaceService svc) =>
 {
     var payment = new PaymentDetails(req.CardNumber, req.CardHolder, req.ExpiryMonth, req.ExpiryYear, req.Cvv);
@@ -188,7 +188,7 @@ app.MapPost("/api/cart/checkout", (CheckoutRequest req, DatabaseMarketplaceServi
 
 // ── Orders ─────────────────────────────────────────────────────────────────
 
-/// <summary>GET /api/orders/customer/{customerId} — returns the customer's order history.</summary>
+// GET /api/orders/customer/{customerId} — returns the customer's order history
 app.MapGet("/api/orders/customer/{customerId:guid}", (Guid customerId, DatabaseMarketplaceService svc) =>
 {
     try
@@ -201,7 +201,7 @@ app.MapGet("/api/orders/customer/{customerId:guid}", (Guid customerId, DatabaseM
     }
 }).WithName("GetCustomerOrders").WithSummary("Get order history for a customer");
 
-/// <summary>GET /api/orders/merchant/{merchantId} — returns all orders with merchant items.</summary>
+// GET /api/orders/merchant/{merchantId} — returns all orders with merchant items
 app.MapGet("/api/orders/merchant/{merchantId:guid}", (Guid merchantId, DatabaseMarketplaceService svc) =>
 {
     try
@@ -214,7 +214,7 @@ app.MapGet("/api/orders/merchant/{merchantId:guid}", (Guid merchantId, DatabaseM
     }
 }).WithName("GetMerchantOrders").WithSummary("Get all orders for a merchant");
 
-/// <summary>PATCH /api/orders/{id}/status — merchant updates the fulfillment status.</summary>
+// PATCH /api/orders/{id}/status — merchant updates the fulfillment status
 app.MapPatch("/api/orders/{id:guid}/status", (Guid id, UpdateOrderStatusRequest req, DatabaseMarketplaceService svc) =>
 {
     try
@@ -230,12 +230,12 @@ app.MapPatch("/api/orders/{id:guid}/status", (Guid id, UpdateOrderStatusRequest 
 
 // ── Analytics & carbon ─────────────────────────────────────────────────────
 
-/// <summary>GET /api/analytics — returns LINQ-computed catalog analytics.</summary>
+// GET /api/analytics — returns LINQ-computed catalog analytics
 app.MapGet("/api/analytics", (DatabaseMarketplaceService svc) =>
     Results.Ok(svc.GetCatalogAnalytics()))
     .WithName("GetAnalytics").WithSummary("Get catalog analytics (LINQ)");
 
-/// <summary>GET /api/carbon/{customerId} — returns the customer's carbon summary.</summary>
+// GET /api/carbon/{customerId} — returns the customer's carbon summary
 app.MapGet("/api/carbon/{customerId:guid}", (Guid customerId, DatabaseMarketplaceService svc) =>
 {
     try
@@ -248,19 +248,19 @@ app.MapGet("/api/carbon/{customerId:guid}", (Guid customerId, DatabaseMarketplac
     }
 }).WithName("GetCarbonSummary").WithSummary("Get carbon footprint summary for a customer");
 
-/// <summary>GET /api/impact — returns the global impact report.</summary>
+// GET /api/impact — returns the global impact report
 app.MapGet("/api/impact", (DatabaseMarketplaceService svc) =>
     Results.Ok(svc.BuildImpactReport()))
     .WithName("GetImpactReport").WithSummary("Get global product impact report");
 
 // ── Notifications ──────────────────────────────────────────────────────────
 
-/// <summary>GET /api/notifications/{userId} — returns all notifications for a user.</summary>
+// GET /api/notifications/{userId} — returns all notifications for a user
 app.MapGet("/api/notifications/{userId:guid}", (Guid userId, DatabaseMarketplaceService svc) =>
     Results.Ok(svc.GetNotifications(userId)))
     .WithName("GetNotifications").WithSummary("Get notifications for a user");
 
-/// <summary>POST /api/notifications/{userId}/read-all — marks all notifications read.</summary>
+// POST /api/notifications/{userId}/read-all — marks all notifications read
 app.MapPost("/api/notifications/{userId:guid}/read-all", (Guid userId, DatabaseMarketplaceService svc) =>
 {
     svc.MarkAllNotificationsRead(userId);
@@ -273,29 +273,29 @@ app.Run();
 // Request / Response DTOs
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// <summary>Login request body.</summary>
+// Login request body
 record LoginRequest(string Email, string Password);
 
-/// <summary>Registration request body.</summary>
+// Registration request body
 record RegisterRequest(string FullName, string Email, string Password, UserRole Role);
 
-/// <summary>Add product request body.</summary>
+// Add product request body
 record AddProductRequest(Guid MerchantId, string Name, string Description, string Category,
     decimal Price, int StockQuantity, double CarbonKgPerUnit);
 
-/// <summary>Update product request body.</summary>
+// Update product request body
 record UpdateProductRequest(Guid MerchantId, string Name, string Description, string Category,
     decimal Price, int StockQuantity, double CarbonKgPerUnit);
 
-/// <summary>Update stock request body.</summary>
+// Update stock request body
 record UpdateStockRequest(Guid MerchantId, int StockQuantity);
 
-/// <summary>Cart add/set request body.</summary>
+// Cart add/set request body
 record CartActionRequest(Guid CustomerId, Guid ProductId, int Quantity);
 
-/// <summary>Checkout request body.</summary>
+// Checkout request body
 record CheckoutRequest(Guid CustomerId, string CardNumber, string CardHolder,
     string ExpiryMonth, string ExpiryYear, string Cvv);
 
-/// <summary>Order status update request body.</summary>
+// Order status update request body
 record UpdateOrderStatusRequest(Guid MerchantId, OrderStatus Status);

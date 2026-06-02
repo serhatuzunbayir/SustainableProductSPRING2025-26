@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using SustainablePS.Core.Data;
 using SustainablePS.Core.Models;
 using SustainablePS.Core.Services;
+using Xunit;
 
 namespace SustainablePS.Tests;
 
@@ -28,6 +30,7 @@ public sealed class MarketplaceServiceTests : IDisposable
         // Use a unique DB name per test class instance to guarantee isolation.
         var options = new DbContextOptionsBuilder<MarketplaceDbContext>()
             .UseInMemoryDatabase($"test-{Guid.NewGuid():N}")
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         _factory = new TestDbContextFactory(options);
         _svc = new DatabaseMarketplaceService(_factory);

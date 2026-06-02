@@ -285,14 +285,18 @@ public sealed class DatabaseMarketplaceService
     {
         EnsureRole(customerId, UserRole.Customer);
         using var db = _dbFactory.CreateDbContext();
-        // LINQ Join: CartEntries ⟶ Products to build CartLine projections
-        return db.CartEntries
+        // LINQ Join: CartEntries -> Products, then construct CartLine in memory.
+        var rows = db.CartEntries
             .Where(c => c.CustomerId == customerId)
             .Join(db.Products.Where(p => p.IsActive),
                   c => c.ProductId,
                   p => p.Id,
-                  (c, p) => new CartLine(p, c.Quantity))
-            .OrderBy(line => line.Product.Name)
+                  (c, p) => new { Product = p, c.Quantity })
+            .OrderBy(row => row.Product.Name)
+            .ToList();
+
+        return rows
+            .Select(row => new CartLine(row.Product, row.Quantity))
             .ToList();
     }
 
@@ -406,6 +410,7 @@ public sealed class DatabaseMarketplaceService
         return db.Orders
             .Include(o => o.Items)
             .Where(o => o.CustomerId == customerId)
+            .AsEnumerable()
             .OrderByDescending(o => o.CreatedAt)
             .ToList();
     }
@@ -418,6 +423,7 @@ public sealed class DatabaseMarketplaceService
         return db.Orders
             .Include(o => o.Items)
             .Where(o => o.Items.Any(i => i.MerchantId == merchantId))
+            .AsEnumerable()
             .OrderByDescending(o => o.CreatedAt)
             .ToList();
     }
@@ -557,6 +563,7 @@ public sealed class DatabaseMarketplaceService
         using var db = _dbFactory.CreateDbContext();
         return db.Notifications
             .Where(n => n.UserId == userId)
+            .AsEnumerable()
             .OrderByDescending(n => n.CreatedAt)
             .ToList();
     }
