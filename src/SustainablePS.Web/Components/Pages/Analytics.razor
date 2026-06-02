@@ -1,0 +1,160 @@
+@page "/analytics"
+@rendermode InteractiveServer
+@inject DatabaseMarketplaceService Marketplace
+@using System.Globalization
+
+<PageTitle>SustainablePS Analytics</PageTitle>
+
+<div class="screen-header">
+    <div>
+        <span class="eyebrow">Product Impact</span>
+        <h1>Catalog Analytics</h1>
+        <p>LINQ-powered breakdown: category stats, merchant revenue, low-stock alerts, and impact rankings.</p>
+    </div>
+</div>
+
+@{
+    var analytics = Marketplace.GetCatalogAnalytics();
+    var impact    = Marketplace.BuildImpactReport();
+}
+
+@* ── Category stats ────────────────────────────────────────────── *@
+<section class="surface-panel" style="margin-bottom:1rem">
+    <div class="panel-heading">
+        <h2>Category Breakdown</h2>
+        <span>@analytics.CategoryStats.Count categor(ies)</span>
+    </div>
+    @if (analytics.CategoryStats.Count == 0)
+    {
+        <p class="empty-state">No active products.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr><th>Category</th><th>Products</th><th>Avg CO2e (kg)</th><th>Total Stock</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var stat in analytics.CategoryStats)
+                {
+                    <tr>
+                        <td>@stat.Category</td>
+                        <td>@stat.ProductCount</td>
+                        <td>@stat.AverageCarbonKgPerUnit.ToString("0.00", CultureInfo.InvariantCulture)</td>
+                        <td>@stat.TotalStock</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@* ── Merchant revenue ──────────────────────────────────────────── *@
+<section class="surface-panel" style="margin-bottom:1rem">
+    <div class="panel-heading">
+        <h2>Merchant Revenue</h2>
+        <span>from paid orders</span>
+    </div>
+    @if (analytics.MerchantRevenueStats.Count == 0)
+    {
+        <p class="empty-state">No paid orders yet.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr><th>Merchant</th><th>Revenue</th><th>Items Sold</th><th>Total CO2e (kg)</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var stat in analytics.MerchantRevenueStats)
+                {
+                    <tr>
+                        <td>@stat.MerchantName</td>
+                        <td>$@stat.TotalRevenue.ToString("0.00", CultureInfo.InvariantCulture)</td>
+                        <td>@stat.ItemsSold</td>
+                        <td>@stat.TotalCarbonKg.ToString("0.00", CultureInfo.InvariantCulture)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@* ── Low-stock alerts ──────────────────────────────────────────── *@
+@if (analytics.LowStockAlerts.Count > 0)
+{
+    <section class="surface-panel" style="margin-bottom:1rem">
+        <div class="panel-heading">
+            <h2>Low Stock Alerts</h2>
+            <span>@analytics.LowStockAlerts.Count product(s)</span>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Product</th><th>Stock</th></tr></thead>
+            <tbody>
+                @foreach (var alert in analytics.LowStockAlerts)
+                {
+                    <tr><td>@alert.ProductName</td><td style="color:var(--danger)">@alert.CurrentStock</td></tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@* ── Impact rankings ───────────────────────────────────────────── *@
+<div style="display:grid;gap:1rem;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:1rem">
+    <section class="surface-panel">
+        <div class="panel-heading"><h2>Highest Carbon</h2></div>
+        <table class="data-table">
+            <thead><tr><th>Product</th><th>CO2e/unit</th></tr></thead>
+            <tbody>
+                @foreach (var s in impact.HighestCarbonProducts)
+                {
+                    <tr>
+                        <td>@s.ProductName</td>
+                        <td>@s.CarbonKgPerUnit.ToString("0.00", CultureInfo.InvariantCulture)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+    <section class="surface-panel">
+        <div class="panel-heading"><h2>Lowest Carbon</h2></div>
+        <table class="data-table">
+            <thead><tr><th>Product</th><th>CO2e/unit</th></tr></thead>
+            <tbody>
+                @foreach (var s in impact.LowestCarbonProducts)
+                {
+                    <tr>
+                        <td>@s.ProductName</td>
+                        <td>@s.CarbonKgPerUnit.ToString("0.00", CultureInfo.InvariantCulture)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<section class="surface-panel">
+    <div class="panel-heading"><h2>Most Purchased</h2></div>
+    @if (impact.MostPurchasedProducts.Count == 0)
+    {
+        <p class="empty-state">No purchase history yet.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead><tr><th>Product</th><th>Category</th><th>Units Sold</th><th>Total CO2e (kg)</th></tr></thead>
+            <tbody>
+                @foreach (var s in impact.MostPurchasedProducts)
+                {
+                    <tr>
+                        <td>@s.ProductName</td>
+                        <td>@s.Category</td>
+                        <td>@s.UnitsPurchased</td>
+                        <td>@s.TotalCarbonKg.ToString("0.00", CultureInfo.InvariantCulture)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>

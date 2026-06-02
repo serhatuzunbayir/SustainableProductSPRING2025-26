@@ -233,8 +233,8 @@
 
 @code {
     private UserAccount? _currentUser;
-    private string _email = MarketplaceService.DemoCustomerEmail;
-    private string _password = MarketplaceService.DemoPassword;
+    private string _email = DatabaseMarketplaceService.DemoCustomerEmail;
+    private string _password = DatabaseMarketplaceService.DemoPassword;
     private string _fullName = string.Empty;
     private string _searchText = string.Empty;
     private string _selectedCategory = "All";
@@ -263,7 +263,7 @@
 
     protected override void OnInitialized()
     {
-        _currentUser = Marketplace.Login(MarketplaceService.DemoCustomerEmail, MarketplaceService.DemoPassword);
+        _currentUser = Marketplace.Login(DatabaseMarketplaceService.DemoCustomerEmail, DatabaseMarketplaceService.DemoPassword);
     }
 
     private void AddToCart(Guid productId)

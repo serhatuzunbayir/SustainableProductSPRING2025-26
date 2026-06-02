@@ -2,8 +2,10 @@ using SustainablePS.Core.Models;
 
 namespace SustainablePS.Core.Services;
 
+/// <summary>Simulates a payment gateway; declines cards ending in 0000.</summary>
 public sealed class MockPaymentProcessor
 {
+    /// <summary>Charges the given amount. Returns success/failure with a transaction ID.</summary>
     public PaymentResult Charge(PaymentDetails details, decimal amount)
     {
         var cardDigits = new string(details.CardNumber.Where(char.IsDigit).ToArray());

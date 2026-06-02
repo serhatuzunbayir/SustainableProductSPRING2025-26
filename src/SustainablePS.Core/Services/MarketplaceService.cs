@@ -2,12 +2,17 @@ using SustainablePS.Core.Models;
 using SustainablePS.Core.Security;
 using System.Text.Json;
 
+#pragma warning disable CS1591 // Missing XML comment — legacy service, documented via inline comments
 namespace SustainablePS.Core.Services;
 
+/// <summary>File-backed marketplace service (legacy JSON persistence, used by tests and MAUI).</summary>
 public sealed class MarketplaceService
 {
+    /// <summary>Shared demo password for seeded accounts.</summary>
     public const string DemoPassword = "demo123";
+    /// <summary>Email of the seeded demo customer.</summary>
     public const string DemoCustomerEmail = "customer@sustainable.test";
+    /// <summary>Email of the seeded demo merchant.</summary>
     public const string DemoMerchantEmail = "merchant@sustainable.test";
 
     // ──────────────────────────────────────────────────────────────────────

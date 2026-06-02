@@ -3,6 +3,7 @@ using System.Text;
 
 namespace SustainablePS.Core.Security;
 
+/// <summary>PBKDF2-SHA256 password hashing utility.</summary>
 public static class PasswordHasher
 {
     private const int SaltSize = 16;
@@ -10,6 +11,7 @@ public static class PasswordHasher
     private const int Iterations = 100_000;
     private const string Prefix = "PBKDF2";
 
+    /// <summary>Hashes a plaintext password using PBKDF2-SHA256 with a random salt.</summary>
     public static string Hash(string password)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(password);
@@ -30,6 +32,7 @@ public static class PasswordHasher
             Convert.ToHexString(hash));
     }
 
+    /// <summary>Verifies a plaintext password against a stored PBKDF2 or legacy SHA-256 hash.</summary>
     public static bool Verify(string password, string expectedHash)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(password);

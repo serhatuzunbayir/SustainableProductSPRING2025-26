@@ -1,0 +1,253 @@
+@page "/merchant"
+@rendermode InteractiveServer
+@inject DatabaseMarketplaceService Marketplace
+@using System.Globalization
+
+<PageTitle>SustainablePS Merchant</PageTitle>
+
+<div class="screen-header">
+    <div>
+        <span class="eyebrow">Merchant Console</span>
+        <h1>Manage Products &amp; Orders</h1>
+        <p>Add, edit, and delete products; update stock; advance order status.</p>
+    </div>
+    <div class="header-actions">
+        <div class="account-pill">
+            @(_merchant is null ? "Not signed in" : _merchant.Email)
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(_message))
+{
+    <div class="notice">@_message</div>
+}
+
+@* ── Login ─────────────────────────────────────────────────────── *@
+@if (_merchant is null)
+{
+    <section class="surface-panel" style="max-width:420px">
+        <h2>Merchant Login</h2>
+        <div style="display:grid;gap:.65rem;margin-top:.75rem">
+            <input placeholder="Email" @bind="_email" />
+            <input placeholder="Password" type="password" @bind="_password" />
+            <button class="primary-button" @onclick="Login">Login</button>
+        </div>
+    </section>
+    return;
+}
+
+@* ── Add / Edit product form ───────────────────────────────────── *@
+<section class="surface-panel" style="margin-bottom:1rem">
+    <div class="panel-heading">
+        <h2>@(_editingId.HasValue ? "Edit Product" : "Add Product")</h2>
+        @if (_editingId.HasValue)
+        {
+            <button class="ghost-button compact-button" @onclick="CancelEdit">Cancel</button>
+        }
+    </div>
+    <div class="product-form">
+        <input placeholder="Name"        @bind="_dName" />
+        <input placeholder="Category"    @bind="_dCategory" />
+        <input placeholder="Price"       @bind="_dPrice" />
+        <input placeholder="Stock"       @bind="_dStock" />
+        <input placeholder="CO2 kg/unit" @bind="_dCarbon" />
+        <textarea placeholder="Description" @bind="_dDescription"></textarea>
+        <button class="primary-button" @onclick="SaveProduct">
+            @(_editingId.HasValue ? "Save Changes" : "Add Product")
+        </button>
+    </div>
+</section>
+
+@* ── Product list ──────────────────────────────────────────────── *@
+<section class="surface-panel" style="margin-bottom:1rem">
+    <div class="panel-heading">
+        <h2>My Products</h2>
+        <span>@MyProducts.Count product(s)</span>
+    </div>
+    @if (MyProducts.Count == 0)
+    {
+        <p class="empty-state">No products yet.</p>
+    }
+    else
+    {
+        <div class="product-list">
+            @foreach (var p in MyProducts)
+            {
+                <article class="product-row">
+                    <div>
+                        <div class="product-title-row">
+                            <h3>@p.Name</h3>
+                            <span>@p.Category</span>
+                        </div>
+                        <div class="product-meta">
+                            <strong>@FormatMoney(p.Price)</strong>
+                            <span>@p.CarbonKgPerUnit.ToString("0.00", CultureInfo.InvariantCulture) kg CO2e</span>
+                            <span>@p.StockQuantity in stock</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end">
+                        <button class="secondary-button compact-button" @onclick="() => StartEdit(p)">Edit</button>
+                        <button class="secondary-button compact-button" @onclick="() => AdjustStock(p.Id, p.StockQuantity - 1)">-</button>
+                        <button class="secondary-button compact-button" @onclick="() => AdjustStock(p.Id, p.StockQuantity + 1)">+</button>
+                        <button class="ghost-button compact-button" style="color:var(--danger)" @onclick="() => DeleteProduct(p.Id)">Delete</button>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@* ── Merchant orders ───────────────────────────────────────────── *@
+<section class="surface-panel">
+    <div class="panel-heading">
+        <h2>Orders</h2>
+        <span>@Orders.Count order(s)</span>
+    </div>
+    @if (Orders.Count == 0)
+    {
+        <p class="empty-state">No orders yet.</p>
+    }
+    else
+    {
+        @foreach (var order in Orders)
+        {
+            <div class="order-row" style="grid-template-columns:1fr auto auto">
+                <div>
+                    <strong>@order.Id.ToString()[..8]</strong>
+                    <span>@order.CreatedAt.ToString("MMM dd, yyyy") · @order.Items.Count item type(s)</span>
+                </div>
+                <strong>@FormatMoney(order.TotalPrice)</strong>
+                <select value="@order.Status" @onchange="e => AdvanceStatus(order.Id, e.Value!.ToString()!)">
+                    @foreach (var status in Enum.GetValues<OrderStatus>())
+                    {
+                        <option value="@status" selected="@(order.Status == status)">@status</option>
+                    }
+                </select>
+            </div>
+        }
+    }
+</section>
+
+@code {
+    // ── State ────────────────────────────────────────────────────
+    private UserAccount? _merchant;
+    private string _email    = DatabaseMarketplaceService.DemoMerchantEmail;
+    private string _password = DatabaseMarketplaceService.DemoPassword;
+    private string? _message;
+
+    // Form fields for add/edit
+    private Guid?  _editingId;
+    private string _dName        = string.Empty;
+    private string _dDescription = string.Empty;
+    private string _dCategory    = string.Empty;
+    private string _dPrice       = string.Empty;
+    private string _dStock       = string.Empty;
+    private string _dCarbon      = string.Empty;
+
+    // ── Computed ─────────────────────────────────────────────────
+    // All active products belonging to this merchant
+    private IReadOnlyList<Product> MyProducts => _merchant is null ? [] :
+        Marketplace.GetProducts().Where(p => p.MerchantId == _merchant.Id).ToList();
+
+    // Orders that contain at least one item from this merchant
+    private IReadOnlyList<Order> Orders => _merchant is null ? [] :
+        Marketplace.GetMerchantOrders(_merchant.Id);
+
+    // ── Auth ─────────────────────────────────────────────────────
+    private void Login()
+    {
+        try
+        {
+            var user = Marketplace.Login(_email, _password);
+            if (user.Role != UserRole.Merchant)
+            {
+                _message = "This page is for merchants only.";
+                return;
+            }
+            _merchant = user;
+            _message  = "Logged in.";
+        }
+        catch (Exception ex) { _message = ex.Message; }
+    }
+
+    // ── Product CRUD ─────────────────────────────────────────────
+    private void SaveProduct()
+    {
+        try
+        {
+            // Parse form inputs
+            var draft = new ProductDraft(
+                _dName, _dDescription, _dCategory,
+                decimal.Parse(_dPrice, CultureInfo.InvariantCulture),
+                int.Parse(_dStock),
+                double.Parse(_dCarbon, CultureInfo.InvariantCulture));
+
+            if (_editingId.HasValue)
+                Marketplace.UpdateProduct(_merchant!.Id, _editingId.Value, draft);
+            else
+                Marketplace.AddProduct(_merchant!.Id, draft);
+
+            _message = _editingId.HasValue ? "Product updated." : "Product added.";
+            ClearForm();
+        }
+        catch (Exception ex) { _message = ex.Message; }
+    }
+
+    private void StartEdit(Product p)
+    {
+        _editingId    = p.Id;
+        _dName        = p.Name;
+        _dDescription = p.Description;
+        _dCategory    = p.Category;
+        _dPrice       = p.Price.ToString(CultureInfo.InvariantCulture);
+        _dStock       = p.StockQuantity.ToString();
+        _dCarbon      = p.CarbonKgPerUnit.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private void DeleteProduct(Guid productId)
+    {
+        try
+        {
+            Marketplace.DeleteProduct(_merchant!.Id, productId);
+            _message = "Product deleted.";
+        }
+        catch (Exception ex) { _message = ex.Message; }
+    }
+
+    // ── Stock ────────────────────────────────────────────────────
+    private void AdjustStock(Guid productId, int newQty)
+    {
+        if (newQty < 0) return;
+        try
+        {
+            Marketplace.UpdateStock(_merchant!.Id, productId, newQty);
+            _message = "Stock updated.";
+        }
+        catch (Exception ex) { _message = ex.Message; }
+    }
+
+    // ── Orders ───────────────────────────────────────────────────
+    private void AdvanceStatus(Guid orderId, string statusStr)
+    {
+        if (!Enum.TryParse<OrderStatus>(statusStr, out var status)) return;
+        try
+        {
+            Marketplace.UpdateOrderStatus(_merchant!.Id, orderId, status);
+            _message = $"Order status updated to {status}.";
+        }
+        catch (Exception ex) { _message = ex.Message; }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────
+    private void CancelEdit() => ClearForm();
+
+    private void ClearForm()
+    {
+        _editingId = null;
+        _dName = _dDescription = _dCategory = _dPrice = _dStock = _dCarbon = string.Empty;
+    }
+
+    private static string FormatMoney(decimal v) =>
+        "$" + v.ToString("0.00", CultureInfo.InvariantCulture);
+}
